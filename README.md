@@ -147,7 +147,7 @@ Go to the **Actions** tab of your repository, select **12-Hour Static Rates Sync
 You can pull the data directly into your frontend checkout applications using standard client side scripts:
 
 \`\`\`javascript
-const DATA_URL = "Your_Deployed_URL";
+const DATA_URL = "Your_Deployed_URL/main/rates.json";
 
 fetch(DATA_URL)
   .then(res => res.json())
