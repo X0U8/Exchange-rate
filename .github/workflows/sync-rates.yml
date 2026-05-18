@@ -1,0 +1,71 @@
+name: 12-Hour Static Rates Sync
+
+on:
+  schedule:
+    - cron: '0 */12 * * *'
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Fetch Global Rates and Generate Static JSON
+        env:
+          EXCHANGE_API_KEY: ${{ secrets.EXCHANGE_RATE_API_KEY }}
+        run: |
+          node -e "
+            const fs = require('fs');
+            
+            const targetCurrencies = [
+              'ALL', 'DZD', 'ARS', 'AMD', 'AUD', 'EUR', 'AZN', 'BSD', 'BHD', 'BBD', 
+              'BYN', 'BAM', 'BWP', 'BRL', 'BGN', 'CAD', 'CLP', 'CNY', 'COP', 'CRC', 
+              'CUP', 'CZK', 'DKK', 'DOP', 'USD', 'EGP', 'ETB', 'GEL', 'GHS', 'GTQ', 
+              'GYD', 'HTG', 'HKD', 'HUF', 'ISK', 'INR', 'IDR', 'IRR', 'ILS', 'JMD', 
+              'JPY', 'JOD', 'KZT', 'KES', 'KWD', 'LBP', 'LYD', 'MYR', 'MXN', 'MKD', 
+              'NOK', 'NPR', 'NZD', 'NGN', 'PKR', 'PEN', 'PHP', 'PLN', 'QAR', 'RON', 
+              'RUB', 'SAR', 'RSD', 'SGD', 'ZAR', 'KRW', 'LKR', 'SEK', 'CHF', 'TWD', 
+              'THB', 'TND', 'TRY', 'UAH', 'AED', 'GBP', 'UYU', 'UZS', 'VND', 'YER'
+            ];
+
+            fetch('https://v6.exchangerate-api.com/v6/' + process.env.EXCHANGE_API_KEY + '/latest/USD')
+              .then(res => res.json())
+              .then(data => {
+                if (data.result !== 'success') throw new Error('API request failed');
+                
+                const filteredRates = {};
+                targetCurrencies.forEach(code => {
+                  if (data.conversion_rates[code] !== undefined) {
+                    filteredRates[code] = data.conversion_rates[code];
+                  }
+                });
+
+                const payload = {
+                  base: 'USD',
+                  last_updated: new Date().toISOString(),
+                  rates: filteredRates
+                };
+
+                fs.writeFileSync('./rates.json', JSON.stringify(payload, null, 2));
+                console.log('Static asset updated with ' + Object.keys(filteredRates).length + ' currencies.');
+              })
+              .catch(err => {
+                console.error('Error:', err);
+                process.exit(1);
+              });
+          "
+
+      - name: Commit and Push to Storage
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add rates.json
+          git commit -m "chore: 12-hour rates update [skip ci]" || echo "Rates are identical. Nothing to change."
+          git push origin main
