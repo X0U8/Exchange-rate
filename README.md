@@ -2,7 +2,7 @@
 
 A lightweight, zero-maintenance, high-performance currency translation layer that acts as a decentralized static CDN for global SaaS products. 
 
-This repository automatically fetches, filters, and serves up-to-date currency conversion values for **101 target global countries** directly from a localized storage endpoint.
+This repository automatically fetches, filters, and serves up-to-date currency conversion values for **target global countries** directly from a localized storage endpoint.
 
 ---
 
@@ -147,7 +147,7 @@ Go to the **Actions** tab of your repository, select **12-Hour Static Rates Sync
 You can pull the data directly into your frontend checkout applications using standard client side scripts:
 
 \`\`\`javascript
-const DATA_URL = "https://raw.githubusercontent.com/<YOUR_USERNAME>/<YOUR_REPO>/main/rates.json";
+const DATA_URL = "Your_Deployed_URL";
 
 fetch(DATA_URL)
   .then(res => res.json())
